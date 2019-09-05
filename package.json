@@ -1,8 +1,8 @@
 {
-  "name": "ts-doc",
-  "version": "0.1.0",
+  "name": "ts-code-api",
+  "version": "0.1.1",
   "main": "dist/index.js",
-  "module": "dist/ts-doc.esm.js",
+  "module": "dist/ts-code-api.esm.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist"
@@ -35,5 +35,9 @@
     "tsdx": "^0.9.1",
     "tslib": "^1.10.0",
     "typescript": "^3.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/malcolm-kee/ts-code-api"
   }
 }
