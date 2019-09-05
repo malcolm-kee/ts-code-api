@@ -11,7 +11,8 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
-    "lint": "tsdx lint"
+    "lint": "tsdx lint",
+    "prepublishOnly": "tsdx build"
   },
   "peerDependencies": {
     "typescript": "^3"
