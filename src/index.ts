@@ -1,26 +1,9 @@
 import * as ts from 'typescript';
 import * as path from 'path';
+import { GetDocOptions, ExportedItem } from './type';
 
 function isDefined<T>(x: T | undefined): x is T {
   return typeof x !== 'undefined';
-}
-
-interface GetDocOptions {
-  files: string[];
-}
-
-interface ItemParams {
-  type: string;
-  description: string;
-}
-
-interface ExportedItem {
-  name: string;
-  typeString: string;
-  comments: string[];
-  params: ItemParams[];
-  returns?: string;
-  jsDocTags: ts.JSDocTagInfo[];
 }
 
 export function tsDoc({ files }: GetDocOptions) {

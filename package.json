@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
+    "@types/micromatch": "^3.1.0",
     "@types/node": "^12.7.4",
     "husky": "^3.0.5",
     "tsdx": "^0.9.1",
@@ -39,5 +40,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/malcolm-kee/ts-code-api"
+  },
+  "dependencies": {
+    "micromatch": "^4.0.2"
   }
 }
