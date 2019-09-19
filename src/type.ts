@@ -7,11 +7,11 @@ export interface GetDocOptions {
    * Set this to true to export `@private` members as well.
    */
   showPrivate?: boolean;
-  excludes: string[];
+  excludes?: string[];
 }
 
 export interface ItemParams {
-  type: string;
+  name: string;
   description: string;
 }
 
@@ -22,4 +22,17 @@ export interface ExportedItem {
   params: ItemParams[];
   returns?: string;
   jsDocTags: ts.JSDocTagInfo[];
+  flags: ts.SymbolFlags;
 }
+
+/**
+ * Unsupported exports for now.
+ *
+ * May be I may consider to expose them once I figure out the best way.
+ */
+export const UNSUPPORTED_SYMBOLS = [
+  ts.SymbolFlags.Interface,
+  ts.SymbolFlags.TypeAlias,
+  ts.SymbolFlags.Type,
+  ts.SymbolFlags.AliasExcludes,
+];

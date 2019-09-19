@@ -1,4 +1,9 @@
 import micromatch from 'micromatch';
 
-export const isMatch = (path: string, patterns: string[]) =>
-  micromatch.isMatch(path, patterns as any);
+export const isDefined = <T>(x: T | undefined): x is T =>
+  typeof x !== 'undefined';
+
+export const isMatch = (path: string, patterns: string[]) => {
+  const result = micromatch.isMatch(path, patterns as any);
+  return result;
+};

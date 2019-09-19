@@ -1,6 +1,6 @@
 {
   "name": "ts-code-api",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "dist/index.js",
   "module": "dist/ts-code-api.esm.js",
   "typings": "dist/index.d.ts",
@@ -11,6 +11,7 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
+    "test:watch": "tsdx test --watch",
     "lint": "tsdx lint",
     "prepublishOnly": "tsdx build"
   },

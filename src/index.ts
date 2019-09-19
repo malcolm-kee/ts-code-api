@@ -1,12 +1,14 @@
-import * as ts from 'typescript';
 import * as path from 'path';
-import { GetDocOptions, ExportedItem } from './type';
+import * as ts from 'typescript';
+import { isDefined, isMatch } from './lib';
+import { ExportedItem, GetDocOptions, UNSUPPORTED_SYMBOLS } from './type';
 
-function isDefined<T>(x: T | undefined): x is T {
-  return typeof x !== 'undefined';
-}
+const getRelativePath = (rootDir: string, targetPath: string) =>
+  path
+    .relative(rootDir, targetPath.replace(/^"|"$/g, ''))
+    .replace(new RegExp(`\\${path.sep}`, 'g'), '/');
 
-export function tsDoc({ files }: GetDocOptions) {
+export function tsDoc(options: GetDocOptions) {
   const rootDir = (require.main && path.dirname(require.main.filename)) || '';
 
   // (1) Create the program
@@ -14,7 +16,7 @@ export function tsDoc({ files }: GetDocOptions) {
     options: {
       target: ts.ScriptTarget.ESNext,
     },
-    rootNames: files.map(file => path.resolve(rootDir, file)),
+    rootNames: options.files.map(file => path.resolve(rootDir, file)),
   });
 
   // (2) Get the non-declaration (.d.ts) source files (.ts)
@@ -30,12 +32,23 @@ export function tsDoc({ files }: GetDocOptions) {
    * -   appropriate ts.Symbol for each SourceFile
    */
   const sfSymbols = nonDeclFiles
-    .map(f => checker.getSymbolAtLocation(f))
-    .filter(isDefined); // here's the type guard to filter out undefined
+    .map(
+      f =>
+        [checker.getSymbolAtLocation(f), f.fileName] as [
+          ts.Symbol | undefined,
+          string
+        ]
+    )
+    .filter(
+      ([f, fileName]) =>
+        isDefined(f) &&
+        (!options.excludes ||
+          !isMatch(getRelativePath(rootDir, fileName), options.excludes))
+    ) as Array<[ts.Symbol, string]>;
 
   // (5) for each SourceFile Symbol
   return sfSymbols
-    .map(sfSymbol => {
+    .map(([sfSymbol]) => {
       const { exports: fileExports } = sfSymbol;
 
       if (!fileExports) {
@@ -44,12 +57,67 @@ export function tsDoc({ files }: GetDocOptions) {
 
       const items: ExportedItem[] = [];
 
-      const relativePath = path
-        .relative(rootDir, sfSymbol.name.replace(/^"|"$/g, ''))
-        .replace(new RegExp(`\\${path.sep}`, 'g'), '/');
+      const relativePath = getRelativePath(rootDir, sfSymbol.name);
 
       fileExports.forEach((value, key) => {
         const jsDocTags = value.getJsDocTags();
+
+        if (
+          UNSUPPORTED_SYMBOLS.includes(value.getFlags()) ||
+          (!options.showPrivate &&
+            jsDocTags.some(tag => tag.name === 'private'))
+        ) {
+          return;
+        }
+
+        // const type = checker.getTypeAtLocation(value.valueDeclaration);
+
+        // const signatures = type.getCallSignatures();
+        // signatures.forEach(signature => {
+        //   const returnType = signature.getReturnType();
+        //   console.log(`returnType: ${checker.typeToString(returnType)}`);
+        //   const paramSymbols = signature.getParameters();
+        //   paramSymbols.forEach(pSymbol => {
+        //     console.log(`paramName: ${pSymbol.name}`);
+        //     const paramType = checker.getTypeAtLocation(
+        //       pSymbol.valueDeclaration
+        //     );
+
+        //     console.log(`paramType flags: ${paramType.getFlags()}`);
+
+        //     const paramTypeSymbol = paramType.getSymbol();
+
+        //     if (paramTypeSymbol) {
+        //       console.log(`paramType symbol: ${paramTypeSymbol.getFlags()}`);
+        //       const paramSymbolDeclaration = paramTypeSymbol.getDeclarations();
+        //       if (paramSymbolDeclaration) {
+        //         paramSymbolDeclaration.forEach(dec => {
+        //           console.log(
+        //             `is interface: ${ts.isInterfaceDeclaration(dec)}`
+        //           );
+        //           if (ts.isInterfaceDeclaration(dec) && dec.name) {
+        //             const interfaceSymbol = checker.getSymbolAtLocation(
+        //               dec.name
+        //             );
+        //             if (interfaceSymbol) {
+        //               const interfaceType = checker.getTypeAtLocation(
+        //                 interfaceSymbol.valueDeclaration
+        //               );
+
+        //               console.log(`interfaceSymbol: ${interfaceType}`);
+        //             }
+        //             dec.members.forEach(member => {
+        //               console.log(`memberText: ${member.getText()}`);
+        //             });
+        //           }
+        //         });
+        //       }
+        //     }
+
+        //     console.log(`paramType: ${checker.typeToString(paramType)}`);
+        //   });
+        // });
+
         items.push({
           name: key.toString(),
           typeString: checker.typeToString(
@@ -59,9 +127,9 @@ export function tsDoc({ files }: GetDocOptions) {
           params: jsDocTags
             .filter(tag => tag.name === 'param' && !!tag.text)
             .map(tag => {
-              const [type, ...rest] = (tag.text as string).split(' ');
+              const [name, ...rest] = (tag.text as string).split(' ');
               return {
-                type,
+                name,
                 description: rest.join(' '),
               };
             }),
@@ -69,6 +137,7 @@ export function tsDoc({ files }: GetDocOptions) {
             .filter(tag => tag.name === 'returns')
             .map(tag => tag.text)[0],
           jsDocTags,
+          flags: value.getFlags(),
         });
       });
 
@@ -77,5 +146,5 @@ export function tsDoc({ files }: GetDocOptions) {
         fileName: relativePath,
       };
     })
-    .filter(Boolean);
+    .filter(isDefined);
 }
