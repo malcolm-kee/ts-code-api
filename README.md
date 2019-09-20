@@ -2,7 +2,9 @@
 
 [![version](https://img.shields.io/npm/v/ts-code-api.svg)](https://www.npmjs.com/package/ts-code-api) ![license](https://img.shields.io/npm/l/ts-code-api.svg)
 
-Extract function definitions and JSDocs comments from typescript code to generate documentations.
+Extract function definitions and JSDocs comments from typescript code to a JavaScript object. You can then use this object generate documentations with your favorite template engine.
+
+> If you want to output markdown, generate HTML then use converter library (e.g. [turndown](https://github.com/domchristie/turndown)) to convert them to markdown files.
 
 ## Installation
 
@@ -10,20 +12,87 @@ Extract function definitions and JSDocs comments from typescript code to generat
 npm i -D ts-code-api
 ```
 
-## How To
+## Usage
+
+Assuming that you have following typescript code:
+
+```ts
+// src/helper.ts
+const add = (a: number, b: number) => a + b;
+
+/**
+ * Sum up a set of numbers
+ * @param numbers numbers which you want to sum up
+ * @returns sum of the numbers
+ */
+export const sum = (a: number, ...numbers: number[]) => numbers.reduce(add, a);
+```
+
+Using this library:
 
 ```js
+// your NodeJS script
 const { tsDoc } = require('ts-code-api');
 
 const output = tsDoc({
-  files: ['src/index.ts'],
+  files: ['src/helper.ts'],
 });
 
 console.log(output);
 ```
 
+The output will be:
+
+```json
+[
+  {
+    "fileName": "helper",
+    "items": [
+      {
+        "name": "sum",
+        "typeString": "(a: number, ...numbers: number[]) => number",
+        "comments": ["Sum up a set of numbers"],
+        "params": [
+          {
+            "name": "a",
+            "type": "number"
+          },
+          {
+            "name": "numbers",
+            "description": "numbers which you want to sum up",
+            "type": "number[]"
+          }
+        ],
+        "returns": {
+          "type": "number",
+          "description": "sum of the numbers"
+        },
+        "jsDocTags": [
+          {
+            "name": "param",
+            "text": "numbers numbers which you want to sum up"
+          },
+          {
+            "name": "returns",
+            "text": "sum of the numbers"
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
 ## Supported Features
+
+Currently this library only supports function (because that is the most common code I write; I seldom need to write OOP code in JavaScript/Typescript).
 
 - [x] function
 - [ ] interface
 - [ ] class
+
+## Comparisons with other libraries
+
+[typedoc](https://typedoc.org/) is handy if you want a standardized format of Typescript documentation, but it doesn't allows you to easily extract the metadata and use your own rendering logic.
+
+[api-extractor](https://api-extractor.com/) seems like allow you to do what this library does too, but it has higher learning curve.
