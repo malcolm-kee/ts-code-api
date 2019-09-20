@@ -12,7 +12,8 @@ export interface GetDocOptions {
 
 export interface ItemParams {
   name: string;
-  description: string;
+  type: string;
+  description?: string;
 }
 
 export interface ExportedItem {
@@ -20,9 +21,11 @@ export interface ExportedItem {
   typeString: string;
   comments: string[];
   params: ItemParams[];
-  returns?: string;
+  returns?: {
+    type: string;
+    description?: string;
+  };
   jsDocTags: ts.JSDocTagInfo[];
-  flags: ts.SymbolFlags;
 }
 
 /**

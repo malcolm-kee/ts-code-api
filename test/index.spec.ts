@@ -14,23 +14,36 @@ describe('tsDoc', () => {
       name: 'sum',
       typeString: '(a: number, ...numbers: number[]) => number',
       comments: ['Sum up a set of numbers'],
-      flags: 2,
+      params: [
+        {
+          name: 'a',
+          description: undefined,
+          type: 'number',
+        },
+        {
+          name: 'numbers',
+          description: 'numbers which you want to sum up',
+          type: 'number[]',
+        },
+      ],
+      returns: {
+        type: 'number',
+        description: 'sum of the numbers',
+      },
       jsDocTags: [
         {
           name: 'param',
           text: 'numbers numbers which you want to sum up',
         },
-      ],
-      params: [
         {
-          name: 'numbers',
-          description: 'numbers which you want to sum up',
+          name: 'returns',
+          text: 'sum of the numbers',
         },
       ],
     });
   });
 
-  test.only('excludes option can used to exclude some files', () => {
+  test('excludes option can used to exclude some files', () => {
     const output = tsDoc({
       files: ['../test-code/x-entry.ts'],
       excludes: ['../**/*.excluded.ts'],
@@ -38,6 +51,10 @@ describe('tsDoc', () => {
 
     expect(output.length).toBe(2);
     expect(output.map(o => o.fileName)).toEqual([
+      'x-dependent-included',
+      'x-entry',
+    ]);
+    expect(output.map(o => o.relativePath)).toEqual([
       '../test-code/x-dependent-included',
       '../test-code/x-entry',
     ]);

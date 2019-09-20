@@ -10,6 +10,7 @@ const add = (a: number, b: number) => a + b;
 /**
  * Sum up a set of numbers
  * @param numbers numbers which you want to sum up
+ * @returns sum of the numbers
  */
 export const sum = (a: number, ...numbers: number[]) => numbers.reduce(add, a);
 

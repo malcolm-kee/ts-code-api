@@ -40,15 +40,18 @@ export function tsDoc(options: GetDocOptions) {
         ]
     )
     .filter(
-      ([f, fileName]) =>
+      ([f, absoluteFilePath]) =>
         isDefined(f) &&
         (!options.excludes ||
-          !isMatch(getRelativePath(rootDir, fileName), options.excludes))
+          !isMatch(
+            getRelativePath(rootDir, absoluteFilePath),
+            options.excludes
+          ))
     ) as Array<[ts.Symbol, string]>;
 
   // (5) for each SourceFile Symbol
   return sfSymbols
-    .map(([sfSymbol]) => {
+    .map(([sfSymbol, absoluteFilePath]) => {
       const { exports: fileExports } = sfSymbol;
 
       if (!fileExports) {
@@ -70,53 +73,25 @@ export function tsDoc(options: GetDocOptions) {
           return;
         }
 
-        // const type = checker.getTypeAtLocation(value.valueDeclaration);
+        const type = checker.getTypeAtLocation(value.valueDeclaration);
 
-        // const signatures = type.getCallSignatures();
-        // signatures.forEach(signature => {
-        //   const returnType = signature.getReturnType();
-        //   console.log(`returnType: ${checker.typeToString(returnType)}`);
-        //   const paramSymbols = signature.getParameters();
-        //   paramSymbols.forEach(pSymbol => {
-        //     console.log(`paramName: ${pSymbol.name}`);
-        //     const paramType = checker.getTypeAtLocation(
-        //       pSymbol.valueDeclaration
-        //     );
-
-        //     console.log(`paramType flags: ${paramType.getFlags()}`);
-
-        //     const paramTypeSymbol = paramType.getSymbol();
-
-        //     if (paramTypeSymbol) {
-        //       console.log(`paramType symbol: ${paramTypeSymbol.getFlags()}`);
-        //       const paramSymbolDeclaration = paramTypeSymbol.getDeclarations();
-        //       if (paramSymbolDeclaration) {
-        //         paramSymbolDeclaration.forEach(dec => {
-        //           console.log(
-        //             `is interface: ${ts.isInterfaceDeclaration(dec)}`
-        //           );
-        //           if (ts.isInterfaceDeclaration(dec) && dec.name) {
-        //             const interfaceSymbol = checker.getSymbolAtLocation(
-        //               dec.name
-        //             );
-        //             if (interfaceSymbol) {
-        //               const interfaceType = checker.getTypeAtLocation(
-        //                 interfaceSymbol.valueDeclaration
-        //               );
-
-        //               console.log(`interfaceSymbol: ${interfaceType}`);
-        //             }
-        //             dec.members.forEach(member => {
-        //               console.log(`memberText: ${member.getText()}`);
-        //             });
-        //           }
-        //         });
-        //       }
-        //     }
-
-        //     console.log(`paramType: ${checker.typeToString(paramType)}`);
-        //   });
-        // });
+        const signatures = type.getCallSignatures();
+        if (signatures.length > 1) {
+          console.info(
+            `Multiple signature available for ${key.toString()}, we will only take the first one`
+          );
+        }
+        const signature = signatures[0];
+        const returnType = signature && signature.getReturnType();
+        const paramTypes =
+          (signature &&
+            signature.getParameters().map(parameterSymbol => ({
+              name: parameterSymbol.name,
+              type: checker.typeToString(
+                checker.getTypeAtLocation(parameterSymbol.valueDeclaration)
+              ),
+            }))) ||
+          [];
 
         items.push({
           name: key.toString(),
@@ -124,26 +99,39 @@ export function tsDoc(options: GetDocOptions) {
             checker.getTypeAtLocation(value.valueDeclaration)
           ),
           comments: value.getDocumentationComment(checker).map(cm => cm.text),
-          params: jsDocTags
-            .filter(tag => tag.name === 'param' && !!tag.text)
-            .map(tag => {
-              const [name, ...rest] = (tag.text as string).split(' ');
-              return {
-                name,
-                description: rest.join(' '),
-              };
-            }),
-          returns: jsDocTags
-            .filter(tag => tag.name === 'returns')
-            .map(tag => tag.text)[0],
+          params: paramTypes.map(param => ({
+            name: param.name,
+            type: param.type,
+            description: jsDocTags
+              .filter(tag => tag.name === 'param' && !!tag.text)
+              .map(tag => {
+                const [name, ...rest] = (tag.text as string).split(' ');
+                return {
+                  name,
+                  description: rest.join(' '),
+                };
+              })
+              .filter(({ name }) => name === param.name)
+              .map(({ description }) => description)[0],
+          })),
+          returns: {
+            type: returnType && checker.typeToString(returnType),
+            description: jsDocTags
+              .filter(tag => tag.name === 'returns')
+              .map(tag => tag.text)[0],
+          },
           jsDocTags,
-          flags: value.getFlags(),
         });
       });
 
+      const fileInfo = path.parse(absoluteFilePath);
+
       return {
         items,
-        fileName: relativePath,
+        relativePath,
+        /** absolute path of the source code, you can extract the required info using `path.parse` */
+        absoluteFilePath,
+        fileName: fileInfo.name,
       };
     })
     .filter(isDefined);
