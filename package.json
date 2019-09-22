@@ -1,6 +1,6 @@
 {
   "name": "ts-code-api",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "dist/index.js",
   "module": "dist/ts-code-api.esm.js",
   "typings": "dist/index.d.ts",
