@@ -83,6 +83,15 @@ The output will be:
 ]
 ```
 
+## Options
+
+`tsDoc` accepts an options object as parameter. The options are:
+
+- files (`string[]`, required): relative paths to files which you want to extract the typescript definitions. Note that you only need to provide the entries files; imported modules will automatically included.
+- excludes (`string[]`, optional): pattern to exclude specific files. Example: `**/*.tsx`
+- showPrivate (`boolean`, optional): make members tagged with `@private` to be exported. Default to `false`.
+- warnIfParamMissingJsDoc (`boolean`, optional): warn if function parameter could not find is associated jsdoc comment. Default to `true`.
+
 ## Supported Features
 
 Currently this library only supports function (because that is the most common code I write; I seldom need to write OOP code in JavaScript/Typescript).

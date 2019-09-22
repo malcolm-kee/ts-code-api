@@ -7,6 +7,7 @@ export const isDefined = <T>(value: T | undefined): value is T =>
 
 /**
  * @private
+ * @param value value that you want to assert if it is string
  */
 export const isString = (value: any): value is string =>
   typeof value === 'string';

@@ -3,11 +3,16 @@ import * as ts from 'typescript';
 export interface GetDocOptions {
   files: string[];
   /**
-   * By default, members tagged with `@private` will not be exported.
-   * Set this to true to export `@private` members as well.
+   * Make members tagged with `@private` to be exported.
+   * Default to `false`.
    */
   showPrivate?: boolean;
   excludes?: string[];
+  /**
+   * Warn if function parameter could not find is associated jsdoc comment.
+   * Default to `true`.
+   */
+  warnIfParamMissingJsDoc?: boolean;
 }
 
 export interface ItemParams {

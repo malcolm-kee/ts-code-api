@@ -17,7 +17,7 @@ describe('tsDoc', () => {
       params: [
         {
           name: 'a',
-          description: undefined,
+          description: '',
           type: 'number',
         },
         {
@@ -31,6 +31,10 @@ describe('tsDoc', () => {
         description: 'sum of the numbers',
       },
       jsDocTags: [
+        {
+          name: 'param',
+          text: 'a',
+        },
         {
           name: 'param',
           text: 'numbers numbers which you want to sum up',
@@ -88,5 +92,30 @@ describe('tsDoc', () => {
     const result = output[0];
 
     expect(result.items.length).toBe(3);
+  });
+
+  test('undocumented param will cause warning', () => {
+    const spy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
+
+    tsDoc({
+      files: ['../test-code/shitty-code.ts'],
+    });
+
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    spy.mockRestore();
+  });
+
+  test('undocumented param warning can be suppressed', () => {
+    const spy = jest.spyOn(global.console, 'warn');
+
+    tsDoc({
+      files: ['../test-code/shitty-code.ts'],
+      warnIfParamMissingJsDoc: false,
+    });
+
+    expect(spy).toHaveBeenCalledTimes(0);
+
+    spy.mockRestore();
   });
 });

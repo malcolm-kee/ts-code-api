@@ -8,7 +8,12 @@ const getRelativePath = (rootDir: string, targetPath: string) =>
     .relative(rootDir, targetPath.replace(/^"|"$/g, ''))
     .replace(new RegExp(`\\${path.sep}`, 'g'), '/');
 
-export function tsDoc(options: GetDocOptions) {
+export function tsDoc({
+  files,
+  excludes,
+  showPrivate,
+  warnIfParamMissingJsDoc = true,
+}: GetDocOptions) {
   const rootDir = (require.main && path.dirname(require.main.filename)) || '';
 
   // (1) Create the program
@@ -16,7 +21,7 @@ export function tsDoc(options: GetDocOptions) {
     options: {
       target: ts.ScriptTarget.ESNext,
     },
-    rootNames: options.files.map(file => path.resolve(rootDir, file)),
+    rootNames: files.map(file => path.resolve(rootDir, file)),
   });
 
   // (2) Get the non-declaration (.d.ts) source files (.ts)
@@ -42,11 +47,8 @@ export function tsDoc(options: GetDocOptions) {
     .filter(
       ([f, absoluteFilePath]) =>
         isDefined(f) &&
-        (!options.excludes ||
-          !isMatch(
-            getRelativePath(rootDir, absoluteFilePath),
-            options.excludes
-          ))
+        (!excludes ||
+          !isMatch(getRelativePath(rootDir, absoluteFilePath), excludes))
     ) as Array<[ts.Symbol, string]>;
 
   // (5) for each SourceFile Symbol
@@ -57,6 +59,7 @@ export function tsDoc(options: GetDocOptions) {
       if (!fileExports) {
         return;
       }
+      const fileInfo = path.parse(absoluteFilePath);
 
       const items: ExportedItem[] = [];
 
@@ -67,8 +70,7 @@ export function tsDoc(options: GetDocOptions) {
 
         if (
           UNSUPPORTED_SYMBOLS.includes(value.getFlags()) ||
-          (!options.showPrivate &&
-            jsDocTags.some(tag => tag.name === 'private'))
+          (!showPrivate && jsDocTags.some(tag => tag.name === 'private'))
         ) {
           return;
         }
@@ -93,27 +95,41 @@ export function tsDoc(options: GetDocOptions) {
             }))) ||
           [];
 
+        const paramJsDocs = jsDocTags
+          .filter(tag => tag.name === 'param' && !!tag.text)
+          .map(tag => {
+            const [name, ...rest] = (tag.text as string).split(' ');
+            return {
+              name,
+              description: rest.join(' '),
+            };
+          });
+
         items.push({
           name: key.toString(),
           typeString: checker.typeToString(
             checker.getTypeAtLocation(value.valueDeclaration)
           ),
           comments: value.getDocumentationComment(checker).map(cm => cm.text),
-          params: paramTypes.map(param => ({
-            name: param.name,
-            type: param.type,
-            description: jsDocTags
-              .filter(tag => tag.name === 'param' && !!tag.text)
-              .map(tag => {
-                const [name, ...rest] = (tag.text as string).split(' ');
-                return {
-                  name,
-                  description: rest.join(' '),
-                };
-              })
-              .filter(({ name }) => name === param.name)
-              .map(({ description }) => description)[0],
-          })),
+          params: paramTypes.map(param => {
+            const associatedJsDocTag = paramJsDocs.find(
+              jsDoc => jsDoc.name === param.name
+            );
+
+            if (warnIfParamMissingJsDoc && !associatedJsDocTag) {
+              console.warn(
+                `Jsdoc comment not found for ${key.toString()} parameter ${
+                  param.name
+                } in ${fileInfo.base}`
+              );
+            }
+
+            return {
+              name: param.name,
+              type: param.type,
+              description: associatedJsDocTag && associatedJsDocTag.description,
+            };
+          }),
           returns: {
             type: returnType && checker.typeToString(returnType),
             description: jsDocTags
@@ -123,8 +139,6 @@ export function tsDoc(options: GetDocOptions) {
           jsDocTags,
         });
       });
-
-      const fileInfo = path.parse(absoluteFilePath);
 
       return {
         items,

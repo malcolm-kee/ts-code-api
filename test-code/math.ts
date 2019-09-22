@@ -9,6 +9,7 @@ const add = (a: number, b: number) => a + b;
 
 /**
  * Sum up a set of numbers
+ * @param a
  * @param numbers numbers which you want to sum up
  * @returns sum of the numbers
  */
