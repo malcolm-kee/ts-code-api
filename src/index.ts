@@ -77,67 +77,82 @@ export function tsDoc({
 
         const type = checker.getTypeAtLocation(value.valueDeclaration);
 
-        const signatures = type.getCallSignatures();
-        if (signatures.length > 1) {
-          console.info(
-            `Multiple signature available for ${key.toString()}, we will only take the first one`
-          );
-        }
-        const signature = signatures[0];
-        const returnType = signature && signature.getReturnType();
-        const paramTypes =
-          (signature &&
-            signature.getParameters().map(parameterSymbol => ({
-              name: parameterSymbol.name,
-              type: checker.typeToString(
-                checker.getTypeAtLocation(parameterSymbol.valueDeclaration)
-              ),
-            }))) ||
-          [];
+        const callSignatures = type.getCallSignatures();
 
-        const paramJsDocs = jsDocTags
-          .filter(tag => tag.name === 'param' && !!tag.text)
-          .map(tag => {
-            const [name, ...rest] = (tag.text as string).split(' ');
-            return {
-              name,
-              description: rest.join(' '),
-            };
+        if (callSignatures.length === 0) {
+          items.push({
+            isFunction: false,
+            name: key.toString(),
+            typeString: checker.typeToString(
+              checker.getTypeAtLocation(value.valueDeclaration)
+            ),
+            comments: value.getDocumentationComment(checker).map(cm => cm.text),
+            jsDocTags,
           });
-
-        items.push({
-          name: key.toString(),
-          typeString: checker.typeToString(
-            checker.getTypeAtLocation(value.valueDeclaration)
-          ),
-          comments: value.getDocumentationComment(checker).map(cm => cm.text),
-          params: paramTypes.map(param => {
-            const associatedJsDocTag = paramJsDocs.find(
-              jsDoc => jsDoc.name === param.name
+        } else {
+          if (callSignatures.length > 1) {
+            console.info(
+              `Multiple signature available for ${key.toString()}, we will only take the first one`
             );
+          }
+          const callSignature = callSignatures[0];
+          const returnType = callSignature && callSignature.getReturnType();
+          const paramTypes =
+            (callSignature &&
+              callSignature.getParameters().map(parameterSymbol => ({
+                name: parameterSymbol.name,
+                type: checker.typeToString(
+                  checker.getTypeAtLocation(parameterSymbol.valueDeclaration)
+                ),
+              }))) ||
+            [];
 
-            if (warnIfParamMissingJsDoc && !associatedJsDocTag) {
-              console.warn(
-                `Jsdoc comment not found for ${key.toString()} parameter ${
-                  param.name
-                } in ${fileInfo.base}`
+          const paramJsDocs = jsDocTags
+            .filter(tag => tag.name === 'param' && !!tag.text)
+            .map(tag => {
+              const [name, ...rest] = (tag.text as string).split(' ');
+              return {
+                name,
+                description: rest.join(' '),
+              };
+            });
+
+          items.push({
+            isFunction: true,
+            name: key.toString(),
+            typeString: checker.typeToString(
+              checker.getTypeAtLocation(value.valueDeclaration)
+            ),
+            comments: value.getDocumentationComment(checker).map(cm => cm.text),
+            params: paramTypes.map(param => {
+              const associatedJsDocTag = paramJsDocs.find(
+                jsDoc => jsDoc.name === param.name
               );
-            }
 
-            return {
-              name: param.name,
-              type: param.type,
-              description: associatedJsDocTag && associatedJsDocTag.description,
-            };
-          }),
-          returns: {
-            type: returnType && checker.typeToString(returnType),
-            description: jsDocTags
-              .filter(tag => tag.name === 'returns')
-              .map(tag => tag.text)[0],
-          },
-          jsDocTags,
-        });
+              if (warnIfParamMissingJsDoc && !associatedJsDocTag) {
+                console.warn(
+                  `Jsdoc comment not found for ${key.toString()} parameter ${
+                    param.name
+                  } in ${fileInfo.base}`
+                );
+              }
+
+              return {
+                name: param.name,
+                type: param.type,
+                description:
+                  associatedJsDocTag && associatedJsDocTag.description,
+              };
+            }),
+            returns: {
+              type: returnType && checker.typeToString(returnType),
+              description: jsDocTags
+                .filter(tag => tag.name === 'returns')
+                .map(tag => tag.text)[0],
+            },
+            jsDocTags,
+          });
+        }
       });
 
       return {

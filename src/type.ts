@@ -21,17 +21,26 @@ export interface ItemParams {
   description?: string;
 }
 
-export interface ExportedItem {
-  name: string;
-  typeString: string;
-  comments: string[];
-  params: ItemParams[];
-  returns?: {
-    type: string;
-    description?: string;
-  };
-  jsDocTags: ts.JSDocTagInfo[];
-}
+export type ExportedItem =
+  | {
+      isFunction: true;
+      name: string;
+      typeString: string;
+      comments: string[];
+      params: ItemParams[];
+      returns?: {
+        type: string;
+        description?: string;
+      };
+      jsDocTags: ts.JSDocTagInfo[];
+    }
+  | {
+      isFunction: false;
+      name: string;
+      typeString: string;
+      comments: string[];
+      jsDocTags: ts.JSDocTagInfo[];
+    };
 
 /**
  * Unsupported exports for now.

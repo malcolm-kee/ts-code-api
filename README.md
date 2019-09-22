@@ -2,7 +2,7 @@
 
 [![version](https://img.shields.io/npm/v/ts-code-api.svg)](https://www.npmjs.com/package/ts-code-api) ![license](https://img.shields.io/npm/l/ts-code-api.svg)
 
-Extract function definitions and JSDocs comments from typescript code to a JavaScript object. You can then use this object generate documentations with your favorite template engine.
+Extract function and constants definitions with JSDocs comments from typescript code to a JavaScript object. You can then use this object generate documentations with your favorite template engine.
 
 > If you want to output markdown, generate HTML then use converter library (e.g. [turndown](https://github.com/domchristie/turndown)) to convert them to markdown files.
 
@@ -26,6 +26,11 @@ const add = (a: number, b: number) => a + b;
  * @returns sum of the numbers
  */
 export const sum = (a: number, ...numbers: number[]) => numbers.reduce(add, a);
+
+/**
+ * Some magic number
+ */
+export const MAGIC_NUMBER: number = 89757;
 ```
 
 Using this library:
@@ -49,6 +54,7 @@ The output will be:
     "fileName": "helper",
     "items": [
       {
+        "isFunction": true,
         "name": "sum",
         "typeString": "(a: number, ...numbers: number[]) => number",
         "comments": ["Sum up a set of numbers"],
@@ -77,6 +83,13 @@ The output will be:
             "text": "sum of the numbers"
           }
         ]
+      },
+      {
+        "isFunction": false,
+        "name": "MAGIC_NUMBER",
+        "typeString": "number",
+        "comments": ["Some magic number"],
+        "jsDocTags": []
       }
     ]
   }
@@ -94,10 +107,10 @@ The output will be:
 
 ## Supported Features
 
-Currently this library only supports function (because that is the most common code I write; I seldom need to write OOP code in JavaScript/Typescript).
+Currently this library only supports function and constants. Many Typescript constructs (e.g. `type` and `interface`) are not supported intentionally because your JavaScript library documentation should not requires Typescript knowledge. `class` definition is currently not supported as I do not have use case of that; I seldom code in OOP.
 
 - [x] function
-- [ ] interface
+- [x] constants
 - [ ] class
 
 ## Comparisons with other libraries

@@ -11,6 +11,7 @@ describe('tsDoc', () => {
     expect(result.items.length).toBe(2);
     const firstItem = result.items[0];
     expect(firstItem).toEqual({
+      isFunction: true,
       name: 'sum',
       typeString: '(a: number, ...numbers: number[]) => number',
       comments: ['Sum up a set of numbers'],
@@ -117,5 +118,33 @@ describe('tsDoc', () => {
     expect(spy).toHaveBeenCalledTimes(0);
 
     spy.mockRestore();
+  });
+
+  test('extract definition of constants', () => {
+    const output = tsDoc({
+      files: ['../test-code/constants-only.ts'],
+    });
+
+    expect(output[0].items[0]).toEqual({
+      isFunction: false,
+      name: 'AUTHOR_NAME',
+      typeString: `"Malcolm Kee"`,
+      comments: [],
+      jsDocTags: [],
+    });
+    expect(output[0].items[1]).toEqual({
+      isFunction: false,
+      name: 'REGEXES',
+      typeString: `{ numbers: RegExp; }`,
+      comments: ['Commonly used regexes'],
+      jsDocTags: [],
+    });
+    expect(output[0].items[2]).toEqual({
+      isFunction: false,
+      name: 'MAGIC_NUMBER',
+      typeString: `number`,
+      comments: ['Some magic number'],
+      jsDocTags: [],
+    });
   });
 });
