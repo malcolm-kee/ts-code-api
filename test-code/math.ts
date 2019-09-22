@@ -1,3 +1,4 @@
+// @overview: mathematics helpers
 export type FirstThreePrimeNumbers = 2 | 3 | 5;
 
 /**

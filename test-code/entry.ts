@@ -1,3 +1,4 @@
+// @overview: entry short description
 export { dependentExportedFunction, PowerOfTwo } from './dependent';
 
 /**

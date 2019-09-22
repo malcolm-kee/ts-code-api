@@ -8,6 +8,7 @@ describe('tsDoc', () => {
 
     const result = output[0];
 
+    expect(result.fileComment).toBe(`mathematics helpers`);
     expect(result.items.length).toBe(2);
     const firstItem = result.items[0];
     expect(firstItem).toEqual({
@@ -71,6 +72,21 @@ describe('tsDoc', () => {
     });
 
     expect(output.length).toEqual(2);
+    expect(
+      output.map(({ fileComment, fileName }) => ({
+        fileName,
+        fileComment,
+      }))
+    ).toEqual([
+      {
+        fileComment: 'dependent short description',
+        fileName: 'dependent',
+      },
+      {
+        fileComment: 'entry short description',
+        fileName: 'entry',
+      },
+    ]);
     expect(output.map(res => res.items.length)).toEqual([2, 1]);
   });
 

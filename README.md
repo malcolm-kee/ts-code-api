@@ -14,10 +14,10 @@ npm i -D ts-code-api
 
 ## Usage
 
-Assuming that you have following typescript code:
+Assuming that you have following typescript code `helper.ts` in `src` folder:
 
 ```ts
-// src/helper.ts
+// @overview: Helper functions for mathematics calculations.
 const add = (a: number, b: number) => a + b;
 
 /**
@@ -52,6 +52,7 @@ The output will be:
 [
   {
     "fileName": "helper",
+    "fileComment": "Helper functions for mathematics calculations.",
     "items": [
       {
         "isFunction": true,
@@ -113,8 +114,14 @@ Currently this library only supports function and constants. Many Typescript con
 - [x] constants
 - [ ] class
 
+## File Overview
+
+> Warning: This is not a standard Typescript feature because there is no official way to provide file overview in current Typescript version as far as I know, so I invented my own convention. If you know the official supported syntaax to provide file overview in Typescript, raise an issue.
+
+You can provide a short file overview for by adding `// @overview: <your description>` magic comment at _first line_ of the code.
+
 ## Comparisons with other libraries
 
-[typedoc](https://typedoc.org/) is handy if you want a standardized format of Typescript documentation, but it doesn't allows you to easily extract the metadata and use your own rendering logic.
+[typedoc](https://typedoc.org/) is handy if you want a standardized format of Typescript documentation, but it doesn't allows you to easily extract the metadata and use your own rendering logic. I personally find the documentation structure confusing.
 
 [api-extractor](https://api-extractor.com/) seems like allow you to do what this library does too, but it has higher learning curve.

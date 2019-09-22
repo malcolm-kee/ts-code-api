@@ -39,9 +39,10 @@ export function tsDoc({
   const sfSymbols = nonDeclFiles
     .map(
       f =>
-        [checker.getSymbolAtLocation(f), f.fileName] as [
+        [checker.getSymbolAtLocation(f), f.fileName, f] as [
           ts.Symbol | undefined,
-          string
+          string,
+          ts.SourceFile
         ]
     )
     .filter(
@@ -49,17 +50,39 @@ export function tsDoc({
         isDefined(f) &&
         (!excludes ||
           !isMatch(getRelativePath(rootDir, absoluteFilePath), excludes))
-    ) as Array<[ts.Symbol, string]>;
+    ) as Array<[ts.Symbol, string, ts.SourceFile]>;
 
   // (5) for each SourceFile Symbol
   return sfSymbols
-    .map(([sfSymbol, absoluteFilePath]) => {
+    .map(([sfSymbol, absoluteFilePath, sourceFile]) => {
       const { exports: fileExports } = sfSymbol;
 
       if (!fileExports) {
         return;
       }
       const fileInfo = path.parse(absoluteFilePath);
+
+      const allSourceCode = sourceFile.getFullText();
+      const leadingComment = ts.getLeadingCommentRanges(allSourceCode, 0);
+
+      /**
+       * @todo: Use non-standard `// overview:` convention because typescript doesn't support this type of comment AFAIK
+       */
+      const fileComment =
+        leadingComment &&
+        leadingComment
+          .filter(
+            range =>
+              range.kind === ts.SyntaxKind.SingleLineCommentTrivia &&
+              range.pos === 0 &&
+              /@overview:/.test(allSourceCode.substring(range.pos, range.end))
+          )
+          .map(range =>
+            allSourceCode
+              .substring(range.pos + 2, range.end)
+              .split('@overview:')[1]
+              .trim()
+          )[0];
 
       const items: ExportedItem[] = [];
 
@@ -160,6 +183,7 @@ export function tsDoc({
         relativePath,
         /** absolute path of the source code, you can extract the required info using `path.parse` */
         absoluteFilePath,
+        fileComment,
         fileName: fileInfo.name,
       };
     })
