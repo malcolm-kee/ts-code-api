@@ -115,10 +115,10 @@ export function tsDoc({
         } else {
           if (callSignatures.length > 1) {
             console.info(
-              `Multiple signature available for ${key.toString()}, we will only take the first one`
+              `Multiple signature available for ${key.toString()}, we will take the last one`
             );
           }
-          const callSignature = callSignatures[0];
+          const callSignature = callSignatures[callSignatures.length - 1];
           const returnType = callSignature && callSignature.getReturnType();
           const paramTypes =
             (callSignature &&
