@@ -189,3 +189,6 @@ export function tsDoc({
     })
     .filter(isDefined);
 }
+
+export { ExportedItem, ItemParams, GetDocOptions } from './type';
+export type GetDocResult = ReturnType<typeof tsDoc>;
